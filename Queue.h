@@ -14,6 +14,7 @@ struct List {
 
 class Iterator
 {        
+    private:
     QueueItem* curr;
     public:
     Iterator(QueueItem* curr) : curr(curr) {}
@@ -21,16 +22,43 @@ class Iterator
     {
         curr = lst->head;
     } 
-    void* getElement(size_t &size);
+
+    QueueItem* getCurrent()
+    {
+        return curr;
+    }
+    
+    void setCurrent(QueueItem* curr)
+    {
+        this->curr = curr;
+    }
+
+    void* getElement(size_t &size)
+    {
+        size = curr->size;
+        return curr->elem;
+    }
         
-    bool hasNext();
+    bool hasNext()
+    {
+        return curr->next != NULL;
+    }
         
-    void goToNext();
+    void goToNext()
+    {
+        curr = curr->next;
+    }
         
-    bool equals(Iterator *right);
+    bool equals(Iterator *right)
+    {
+        size_t size = 0;
+        void* rhs = right->getElement(size);
+        return curr->size == size && !memcmp(rhs, curr->elem, size);
+    }
 };
 
-class Queue {
+class Queue 
+{
     List* lst;
     public:
     Queue()
@@ -49,7 +77,7 @@ class Queue {
 
     void* back(size_t &size);
     
-    //int insert(Iterator *iter, void *elem, size_t size);
+    int insert(Iterator *iter, void *elem, size_t size);
 
     int size();
     

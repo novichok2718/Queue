@@ -1,89 +1,141 @@
 #include "Queue.h"
 
-void deleteQueueItem(QueueItem **tmp)
-{
-    if (tmp && *tmp)
-    {
-        free((*tmp)->elem);
-        free(*tmp);
-    }
-}
-
 int Queue::push(void *elem, size_t size)
 {
-    QueueItem *newItem = (QueueItem *)malloc(sizeof(QueueItem));
-    newItem->elem = malloc(sizeof(size));
-    memcpy(newItem->elem, elem, size);
-    newItem->size = size;
-    newItem->next = NULL;
-    ++lst->size;
-    if (!lst->tail && !lst->head)
+    if (size > 0)
     {
-        lst->tail = newItem;
-        lst->head = newItem;
+        QueueItem *newItem = (QueueItem *)malloc(sizeof(QueueItem));
+        if (!newItem)
+            return 0;
+
+        newItem->elem = malloc(size);
+        if (!newItem->elem)
+        {
+            free(newItem);
+            return 0;
+        }
+
+        memcpy(newItem->elem, elem, size);
+        newItem->size = size;
+        newItem->next = NULL;
+
+        if (lst->tail == NULL)
+        {
+            lst->head = lst->tail = newItem;
+        }
+        else
+        {
+            lst->tail->next = newItem;
+            lst->tail = newItem;
+        }
+
+        ++lst->size;
         return 1;
     }
-    lst->tail->next = newItem;
-    lst->tail = newItem;
-    return 1;
+    return 0;
 }
 
 int Queue::pop()
 {
-    if (!lst->head)
+    if (lst->head == NULL)
     {
         return 0;
     }
     QueueItem *tmp = lst->head;
     lst->head = lst->head->next;
-    deleteQueueItem(&tmp);
+    free(tmp->elem);
+    free(tmp);
     --lst->size;
     return 1;
 }
 
 void *Queue::front(size_t &size)
 {
-    size = lst->head->size;
-    return lst->head;
+    if (lst->head)
+    {
+        size = lst->head->size;
+        return lst->head->elem;
+    }
+    size = 0;
+    return NULL;
 }
 
 void *Queue::back(size_t &size)
 {
-    size = lst->tail->size;
-    return lst->tail;
+    if (lst->tail)
+    {
+        size = lst->tail->size;
+        return lst->tail->elem;
+    }
+    size = 0;
+    return NULL;
 }
 
-int Queue::size() { return lst->size; }
+int Queue::size() { return lst ? lst->size : 0; }
 
-size_t Queue::max_bytes() { return sizeof(lst) * lst->size; }
+size_t Queue::max_bytes() { return 1; }
 
-bool Queue::empty() { return lst->size == 0; }
+bool Queue::empty() { return lst ? lst->size == 0 : true; }
 
 void Queue::clear()
 {
-    List** list = &lst;
-    if (!list || !*list)
+    if (lst == NULL)
     {
         return;
     }
-    if ((*list)->head == NULL)
-    {
-        free(*list);
-        *list = NULL;
-        return;
-    }
-    QueueItem *head = (*list)->head;
-    QueueItem *next = NULL;
 
-    while (head)
+    QueueItem *current = lst->head;
+    while (current != NULL)
     {
-        free(head->elem);
-        next = head->next;
-        free(head);
-        head = next;
+        QueueItem *next = current->next;
+        free(current->elem);
+        free(current);
+        current = next;
     }
-    free(*list);
-    *list = NULL;
+
+    free(lst);
+    lst = nullptr;
 }
 
+int Queue::insert(Iterator *iter, void *elem, size_t size)
+{
+    if (!iter || !iter->getCurrent())
+    {
+        return 0;
+    }
 
+    QueueItem *newItem = (QueueItem *)malloc(sizeof(QueueItem));
+    if (!newItem)
+    {
+        return 0;
+    }
+
+    newItem->elem = malloc(size);
+    if (!newItem->elem)
+    {
+        free(newItem);
+        return 0;
+    }
+
+    memcpy(newItem->elem, elem, size);
+    newItem->size = size;
+
+    newItem->next = iter->getCurrent();
+
+    if (iter->getCurrent() == lst->head)
+    {
+        lst->head = newItem;
+    }
+    else
+    {
+        QueueItem *prev = lst->head;
+        while (prev->next != iter->getCurrent())
+        {
+            prev = prev->next;
+        }
+        prev->next = newItem;
+    }
+
+    ++lst->size;
+    return 1;
+}
