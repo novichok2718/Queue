@@ -97,8 +97,9 @@ void Queue::clear()
     lst = nullptr;
 }
 
-int Queue::insert(Iterator *iter, void *elem, size_t size)
+int Queue::insert(Container::Iterator *_iter, void *elem, size_t size)
 {
+    QueueIterator* iter = dynamic_cast<QueueIterator*>(_iter);
     if (!iter || !iter->getCurrent())
     {
         return 0;
@@ -139,3 +140,63 @@ int Queue::insert(Iterator *iter, void *elem, size_t size)
     ++lst->size;
     return 1;
 }
+
+Container::Iterator *Queue::newIterator() { return lst->size ? new QueueIterator(lst) : NULL; }
+
+Container::Iterator *Queue::find(void *elem, size_t size)
+{
+    if (!elem || !size)
+        return NULL;
+
+    QueueItem *curr = lst->head;
+    while (curr)
+    {
+        if (curr->size == size && !memcmp(curr->elem, elem, size))
+        {
+            return new QueueIterator(curr);
+        }
+        curr = curr->next;
+    }
+    return NULL;
+}
+
+void Queue::remove(Container::Iterator *_iter) 
+{
+    QueueIterator* iter = dynamic_cast<QueueIterator*>(_iter);
+    if (!iter || !iter->getCurrent()) 
+    {
+        return; // Некорректный итератор
+    }
+
+    QueueItem* current = iter->getCurrent();
+
+    if (current == lst->head) 
+    {
+        // Особый случай: удаляем первый элемент
+        lst->head = lst->head->next;
+        if (lst->head == NULL) 
+        {
+            lst->tail = NULL; // Если удаленный элемент был единственным, очищаем tail
+        }
+    } 
+    else 
+    {
+        // Ищем предыдущий элемент
+        QueueItem* prev = lst->head;
+        while (prev->next != current) 
+        {
+            prev = prev->next;
+        }
+
+        prev->next = current->next;
+        if (current == lst->tail) 
+        {
+            lst->tail = prev; // Если удаляем последний элемент, обновляем tail
+        }
+    }
+    iter->setCurrent(current->next); // Перемещаем итератор на следующий элемент
+    free(current->elem); // Освобождаем память
+    free(current);
+    --lst->size;
+}
+

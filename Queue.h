@@ -12,13 +12,13 @@ struct List {
     size_t size;
 };
 
-class Iterator
+class QueueIterator : public Container::Iterator
 {        
     private:
     QueueItem* curr;
     public:
-    Iterator(QueueItem* curr) : curr(curr) {}
-    Iterator(List* lst)
+    QueueIterator(QueueItem* curr) : curr(curr) {}
+    QueueIterator(List* lst)
     {
         curr = lst->head;
     } 
@@ -27,41 +27,42 @@ class Iterator
     {
         return curr;
     }
-    
+
     void setCurrent(QueueItem* curr)
     {
         this->curr = curr;
     }
 
-    void* getElement(size_t &size)
+    void* getElement(size_t &size) override
     {
         size = curr->size;
         return curr->elem;
     }
         
-    bool hasNext()
+    bool hasNext() override
     {
         return curr->next != NULL;
     }
         
-    void goToNext()
+    void goToNext() override
     {
         curr = curr->next;
     }
         
-    bool equals(Iterator *right)
+    bool equals(Container::Iterator *right) override
     {
         size_t size = 0;
         void* rhs = right->getElement(size);
         return curr->size == size && !memcmp(rhs, curr->elem, size);
     }
+    ~QueueIterator() = default;
 };
 
-class Queue 
+class Queue : AbstractQueue
 {
     List* lst;
     public:
-    Queue()
+    Queue(MemoryManager &mem) : AbstractQueue(mem)
     {
         lst = (List*)malloc(sizeof(List));
         lst->head = NULL;
@@ -77,17 +78,17 @@ class Queue
 
     void* back(size_t &size);
     
-    int insert(Iterator *iter, void *elem, size_t size);
+    int insert(Container::Iterator *iter, void *elem, size_t size);
 
     int size();
     
     size_t max_bytes();
 
-    //Iterator* find(void *elem, size_t size);    
+    Container::Iterator* find(void *elem, size_t size);    
     
-    //Iterator* newIterator();
+    Container::Iterator* newIterator();
     
-    //void remove(Iterator *iter);
+    void remove(Container::Iterator *iter);
     
     void clear();
     
